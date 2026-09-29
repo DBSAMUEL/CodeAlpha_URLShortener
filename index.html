@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>URL Shortener</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+  .card{background:#1e293b;padding:28px;border-radius:14px;width:100%;max-width:520px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  h1{margin:0 0 4px;font-size:1.5rem}
+  p.sub{margin:0 0 20px;color:#94a3b8;font-size:.9rem}
+  input{width:100%;padding:12px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:inherit;font-size:1rem}
+  button{margin-top:12px;width:100%;padding:12px;border:0;border-radius:8px;background:#3b82f6;color:#fff;font-size:1rem;cursor:pointer}
+  button:hover{background:#2563eb}
+  .result,.error{margin-top:16px;padding:12px;border-radius:8px;word-break:break-all}
+  .result{background:#0f172a;border:1px solid #22c55e}
+  .error{background:#450a0a;border:1px solid #ef4444}
+  .hidden{display:none}
+  .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .row a{color:#60a5fa}
+  .copy{width:auto;margin:0;padding:6px 12px;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🔗 URL Shortener</h1>
+  <p class="sub">Paste a long URL and get a short link.</p>
+  <input id="url" type="text" placeholder="https://example.com/very/long/link" autofocus>
+  <button id="go">Shorten</button>
+  <div id="result" class="result hidden"><div class="row"><a id="short" target="_blank"></a><button class="copy" id="copy">Copy</button></div></div>
+  <div id="error" class="error {% if not error %}hidden{% endif %}">{{ error or '' }}</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+async function shorten(){
+  $('error').classList.add('hidden'); $('result').classList.add('hidden');
+  try{
+    const r = await fetch('/api/shorten',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:$('url').value})});
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||'Something went wrong');
+    $('short').textContent = d.short_url; $('short').href = d.short_url;
+    $('result').classList.remove('hidden');
+  }catch(e){ $('error').textContent = e.message; $('error').classList.remove('hidden'); }
+}
+$('go').onclick = shorten;
+$('url').addEventListener('keydown',e=>{if(e.key==='Enter')shorten()});
+$('copy').onclick = async()=>{await navigator.clipboard.writeText($('short').textContent);$('copy').textContent='Copied!';setTimeout(()=>$('copy').textContent='Copy',1500)};
+</script>
+</body>
+</html>
